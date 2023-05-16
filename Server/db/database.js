@@ -4,10 +4,13 @@ import {config} from '../config.js';
 
 
 // mongodb 로 변환
-import MongoDb from 'mongodb';
+// import MongoDb from 'mongodb';
 
 // const {host, user, database, password} = config.db;
 
+
+// mongoose 사용
+import Mongoose from 'mongoose';
 
 
 // const pool = mysql.createPool({
@@ -35,15 +38,32 @@ import MongoDb from 'mongodb';
 // })
 
 
-let db;
-
 // mongoDb 사용하기
+// export async function connectDB(){
+//     return MongoDb.MongoClient.connect(config.db.host)
+//     .then((client) => {
+//         db = client.db()
+//     });
+// }
+// let db;
+
+
+// mongoose 사용
 export async function connectDB(){
-    return MongoDb.MongoClient.connect(config.db.host)
-    .then((client) => {
-        db = client.db()
-    });
+    return Mongoose.connect(config.db.host);
 }
+
+export function useVirtualId(schema){
+    schema.virtual('id').get(function(){
+        return this._id.toString();
+    })
+    schema.set('toJSON', {virtuals : true});
+    schema.set('toObject', {virtuals:true});
+}
+
+
+
+
 
 export function getUsers(){
     return db.collection('users')   

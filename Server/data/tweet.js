@@ -11,13 +11,27 @@ import * as userRepository from './auth.js';
 
 
 
-import MongoDb from 'mongodb';
+// import MongoDb from 'mongodb';
 import { getTweets } from '../db/database.js'
-
-
 // const DataTypes = SQ.DataTypes;
-const ObjectID = MongoDb.ObjectId;
+// const ObjectID = MongoDb.ObjectId;
 
+// mongoose 
+import Mongoose from 'mongoose';
+import { useVirtualId } from '../db/database.js';
+
+const tweetShema = new Mongoose.Schema({
+    text : {type : String, required: true},
+    userId : {type : String, required: true},
+    name : {type : String, required: true},
+    username : {type : String, required: true},
+    url : String
+    },
+    {timestamps : true}
+)
+
+useVirtualId(tweetShema);
+const Tweet = Mongoose.model('Tweet', tweetShema)
 
 
 // sequelize 버젼
@@ -108,11 +122,16 @@ export async function getAll() {
     //     });
 
     //mongoDb 
-    return getTweets()
-        .find()
-        .sort({ createdAt: -1 })
-        .toArray()
-        .then(maptweets);
+    // return getTweets()
+    //     .find()
+    //     .sort({ createdAt: -1 })
+    //     .toArray()
+    //     .then(maptweets);
+
+    //Mongoose
+    return Tweet
+    .find()
+    .sort({ createdAt: -1 });
 }
 
 
@@ -138,11 +157,16 @@ export async function getAllByUsername(username) {
     //     });
 
     //mongoDb 
-    return getTweets()
-        .find({ username })
-        .sort({ createdAt: -1 })
-        .toArray()
-        .then(maptweets)
+    // return getTweets()
+    //     .find({ username })
+    //     .sort({ createdAt: -1 })
+    //     .toArray()
+    //     .then(maptweets)
+
+    //Mongoose
+    return Tweet
+    .find({username})
+    .sort({ createdAt: -1 })
 }
 
 export async function getById(id) {
@@ -166,11 +190,14 @@ export async function getById(id) {
     // })
 
     //mongoDb  
-    return getTweets()
-        .find({ _id: new ObjectID(id)})
-        .sort({ createdAt: -1 })
-        .next()
-        .then(mapOptionalTweet)
+    // return getTweets()
+    //     .find({ _id: new ObjectID(id)})
+    //     .sort({ createdAt: -1 })
+    //     .next()
+    //     .then(mapOptionalTweet)
+
+    //Mongoose
+    return Tweet.findById(id);
 }
 
 
@@ -197,17 +224,28 @@ export async function create(text, userId) {
     //     })
 
     //mongoDb     
+    // return userRepository.findById(userId)
+    //     .then((user) => getTweets().insertOne({
+    //         text,
+    //         createdAt: new Date(),
+    //         userId,
+    //         name: user.name,
+    //         username: user.username,
+    //         url: user.url
+    //     }))
+    //     .then((result) => console.log(result))
+    //     .then(mapOptionalTweet)
+
+    //Mongoose
     return userRepository.findById(userId)
-        .then((user) => getTweets().insertOne({
-            text,
-            createdAt: new Date(),
-            userId,
-            name: user.name,
-            username: user.username,
-            url: user.url
-        }))
-        .then((result) => console.log(result))
-        .then(mapOptionalTweet)
+    .then((user) => new Tweet({
+        text,
+        userId,
+        name : user.name,
+        username : user.username
+    })
+    .save()
+    );
 }
 
 export async function update(id, text) {
@@ -230,13 +268,18 @@ export async function update(id, text) {
     //     })
 
     //mongoDb     
-    return getTweets().findOneAndUpdate(
-        {_id: new ObjectID(id) },
-        { $set: { text }},
-        { returnOriginal: false }
-    )
-    .then((res) => res.value)
-    .then(mapOptionalTweet);
+    // return getTweets().findOneAndUpdate(
+    //     {_id: new ObjectID(id) },
+    //     { $set: { text }},
+    //     { returnOriginal: false }
+    // )
+    // .then((res) => res.value)
+    // .then(mapOptionalTweet);
+
+    //Mongoose
+    return Tweet.findByIdAndUpdate(id, {text},{
+        returnOriginal: false
+    })
 }
 
 
@@ -255,10 +298,13 @@ export async function remove(id) {
     // });
 
     //mongoDb 
-    return getTweets().deleteOne({ _id: new ObjectID(id) })
+    // return getTweets().deleteOne({ _id: new ObjectID(id) })
+
+    //Mongoose
+    return Tweet.findByIdAndDelete(id);
 }
 
-function mapOptionalTweet(tweet) {
+function mapOptionalTweet (tweet) {
     // tweet 존재하면 복사해서 id에 tweet의 아이디를 스트링 형태로 넣는다.
     return tweet ? { ...tweet, id: tweet._id.toString() } : tweet;
 };

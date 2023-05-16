@@ -2,8 +2,26 @@
 // import { sequelize } from '../db/database.js';
 // import SQ from 'sequelize';
 
-import {getUsers} from "../db/database.js";
-import MongoDb from "mongodb";
+import {getUsers, useVirtualId} from "../db/database.js";
+// import MongoDb from "mongodb";
+
+// Mongoose 사용
+import Mongoose from "mongoose";
+// import {} from '../datbase/database.js';
+
+const UserSchema = new Mongoose.Schema({
+    username: { type:String, required: true },
+    name: { type:String, required: true },
+    email: { type:String, required: true },
+    password: { type:String, required: true },
+    url : String
+
+});
+
+useVirtualId(UserSchema);
+const User = Mongoose.model('User', UserSchema);
+
+
 
 // sequelize
 // 데이터 타입 결정하기
@@ -52,7 +70,7 @@ import MongoDb from "mongodb";
 
 // Mongodb
 // mongodb는 객체형식을 데이터를 저장한다. 데이터를 관리할때 특정 테이블이나 고유값이 없기 때문에 데이터를 관리하기위해 mongodb 는 ObjectID 라는 고유값이 있다.
-const ObjectID = MongoDb.ObjectId;
+// const ObjectID = MongoDb.ObjectId;
 
 
 //user 라고 만들면 users 라고 만듬 무조건 s를 붙임, 만약 users가 있다면 만드는게 아니라 그 테이블을 가르키게 된다.
@@ -87,10 +105,13 @@ export async function findByUsername(username) {
     // return User.findOne({ where: { username } })
 
     // Mongodb 사용
-    return getUsers().find({username})
-    // 위에 거가 처리되면 다음으로 넘어가고 처리되지 않는다면 위에서 끝
-    .next()
-    .then(mapOptionalUser);
+    // return getUsers().find({username})
+    // // 위에 거가 처리되면 다음으로 넘어가고 처리되지 않는다면 위에서 끝
+    // .next()
+    // .then(mapOptionalUser);
+
+    // Mongoose 사용
+    return User.findOne({username})
 }
 
 export async function createUser(user) {
@@ -109,11 +130,14 @@ export async function createUser(user) {
 
     // Mongodb 사용
     // insertOne => 하나만 넣기
-    return getUsers().insertOne(user)
-    .then((result)=>{ 
-        console.log(result);
-        // result.ops[0]._id.toString()
-    });
+    // return getUsers().insertOne(user)
+    // .then((result)=>{ 
+    //     console.log(result);
+    //     // result.ops[0]._id.toString()
+    // });
+    return new User(user)
+    .save()
+    .then((data)=>{data.id});
 }
 
 
@@ -131,12 +155,16 @@ export async function findById(id) {
     // return User.findByPk(id);
 
     // Mongodb 사용
-    return getUsers()
-    .find({ _id: new ObjectID(id)})
-    // 위에 거가 처리되면 다음으로 넘어가고 처리되지 않는다면 위에서 끝
-    .next()
-    .then(mapOptionalUser)
+    // return getUsers()
+    // .find({ _id: new ObjectID(id)})
+    // // 위에 거가 처리되면 다음으로 넘어가고 처리되지 않는다면 위에서 끝
+    // .next()
+    // .then(mapOptionalUser)
+
+    // Mongoose 사용
+    return User.findById(id);
 }
+
 
 function mapOptionalUser(user){
     // user 가 이승면 id에 user 값을 string값을 전달한다.
